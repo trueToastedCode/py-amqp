@@ -36,6 +36,7 @@ def build_make_amqp_access(asyncio, datetime, aio_pika, Id):
             )
 
         async def close():
+            await channel.close()
             await connection.close()
 
         return send_rpc_message, close
