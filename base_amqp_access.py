@@ -15,17 +15,25 @@ def build_make_amqp_access(asyncio, datetime, aio_pika, Id):
             correlation_id = Id.create_id()
             future = loop.create_future()
             futures[correlation_id] = future
+            expiration_dt = None \
+                if timeout_ms is None or timeout_ms <= 0 \
+                else datetime.datetime.now() + datetime.timedelta(milliseconds=timeout_ms)
             await channel.default_exchange.publish(
                 aio_pika.Message(
                     message.encode(),
                     content_type='text/plain',
                     correlation_id=correlation_id,
                     reply_to=callback_queue.name,
-                    expiration=datetime.datetime.now() + datetime.timedelta(microseconds=timeout_ms)
+                    expiration=expiration_dt
                 ),
                 routing_key=queue
             )
-            return await asyncio.wait_for(future, timeout=2)
+            if expiration_dt is None:
+                return await future
+            return await asyncio.wait_for(
+                future,
+                timeout=(expiration_dt - datetime.datetime.now()).total_seconds()
+            )
 
         async def close():
             await connection.close()
