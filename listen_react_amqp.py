@@ -6,6 +6,10 @@ def make_listen_react_amqp(logging, aio_pika, functools, make_amqp_callback):
         channel = await connection.channel()
         queue = await channel.declare_queue(queue)
 
+        async def close():
+            await channel.close()
+            await connection.close()
+
         amqp_callback = make_amqp_callback(controllers)
 
         if healthy_callback:
@@ -19,5 +23,7 @@ def make_listen_react_amqp(logging, aio_pika, functools, make_amqp_callback):
                 channel.default_exchange
             )
         )
+
+        return close
 
     return listen_react_amqp
