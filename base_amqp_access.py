@@ -12,7 +12,7 @@ def build_make_amqp_access(aio_pika, Id):
         await callback_queue.consume(on_response)
 
         async def send_rpc_message(message):
-            correlation_id = Id.createId()
+            correlation_id = Id.create_id()
             future = loop.create_future()
             futures[correlation_id] = future
             await channel.default_exchange.publish(
