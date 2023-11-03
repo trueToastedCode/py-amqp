@@ -1,6 +1,3 @@
-import logging
-
-
 def build_make_amqp_callback(aio_pika, inspect, json):
     def make_amqp_callback(controllers):
         async def amqp_callback(exchange, rabbit_message):
