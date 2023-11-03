@@ -1,3 +1,6 @@
+import logging
+
+
 def build_make_amqp_callback(aio_pika, inspect, json):
     def make_amqp_callback(controllers):
         async def amqp_callback(exchange, rabbit_message):
@@ -10,7 +13,10 @@ def build_make_amqp_callback(aio_pika, inspect, json):
                     function_name = message if i == -1 else message[:i]
                     # get controller
                     try:
-                        chosen = next(f for f in controllers if f.__name__ == function_name)
+                        if isinstance(controllers, list):
+                            chosen = next(f for f in controllers if f.__name__ == function_name)
+                        else:
+                            chosen = controllers[function_name]
                         # parse arguments
                         try:
                             params = {} if i == -1 else json.loads(message[i:])
@@ -31,7 +37,7 @@ def build_make_amqp_callback(aio_pika, inspect, json):
                                 'statusCode': 400,
                                 'body': {'error': 'Invalid controller parameters'}
                             }
-                    except StopIteration:
+                    except (StopIteration, KeyError):
                         # controller doesn't exist
                         result = {
                             'statusCode': 400,
